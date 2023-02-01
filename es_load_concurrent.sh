@@ -1,7 +1,15 @@
 #####CHANGE ME#################
 
+clusterHostname=https://load-gen-test.es.us-east-2.aws.elastic-cloud.com
+elasticUser=elastic
+elasticPw=bzMPOxjd78uhLcKln1vbBTuv
+
+indexName=load_gen
+numIndexShards=6
+
 DATA_FILE=mock_data5
 numParallelLoads=8
+
 
 ################################
 
@@ -14,12 +22,12 @@ echo ""
 
 varStart=`date +%M:%S`
 echo "Delete Load Gen Index"
-curl -u elastic:bzMPOxjd78uhLcKln1vbBTuv -X DELETE 'https://load-gen-test.es.us-east-2.aws.elastic-cloud.com/load_gen/'
+curl -u $elasticUser:$elasticPw -X DELETE '$clusterHostname/$indexName/'
 echo ""
 
 echo ""
 echo "Create New Load Gen Index"
-curl -u elastic:bzMPOxjd78uhLcKln1vbBTuv -H 'Content-Type: application/x-ndjson' -X PUT 'https://load-gen-test.es.us-east-2.aws.elastic-cloud.com/load_gen/' -d'{"settings": {"number_of_shards": 6 }}'
+curl -u $elasticUser:$elasticPw -H 'Content-Type: application/x-ndjson' -X PUT '$clusterHostname/$indexName/' -d'{"settings": {"number_of_shards": $numIndexShards }}'
 echo ""
 echo ""
 
@@ -27,7 +35,7 @@ echo ""
 for i in $( seq 1 $numParallelLoads )
 do
 
-nohup curl -u elastic:bzMPOxjd78uhLcKln1vbBTuv -H 'Content-Type: application/x-ndjson' -XPOST 'https://load-gen-test.es.us-east-2.aws.elastic-cloud.com/load_gen/_bulk?pretty' --data-binary @$DATA_FILE -o /dev/null --silent &
+nohup curl -u $elasticUser:$elasticPw -H 'Content-Type: application/x-ndjson' -XPOST '$clusterHostname/$indexName/_bulk?pretty' --data-binary @$DATA_FILE -o /dev/null --silent &
 pids[${i}]=$!
 
 done
@@ -45,10 +53,10 @@ echo "Seconds: " $(($secEnd-$secStart))
 echo ""
 echo "Index Record Count: " 
 sleep 5
-curl -u elastic:bzMPOxjd78uhLcKln1vbBTuv -H 'Content-Type: application/x-ndjson' -X GET 'https://load-gen-test.es.us-east-2.aws.elastic-cloud.com/load_gen/_count'
+curl -u $elasticUser:$elasticPw -H 'Content-Type: application/x-ndjson' -X GET '$clusterHostname/$indexName/_count'
 echo ""
 echo ""
 echo "Index Size in Bytes"
-curl -u elastic:bzMPOxjd78uhLcKln1vbBTuv -H 'Content-Type: application/x-ndjson' -X GET 'https://load-gen-test.es.us-east-2.aws.elastic-cloud.com/load_gen/_stats/store'
+curl -u $elasticUser:$elasticPw -H 'Content-Type: application/x-ndjson' -X GET '$clusterHostname/$indexName/_stats/store'
 echo ""
 echo ""
